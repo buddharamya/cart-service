@@ -2,9 +2,12 @@ package com.microserviceprojects.cart_service.Service;
 
 import com.microserviceprojects.cart_service.DTO.CartItemRequestDTO;
 import com.microserviceprojects.cart_service.DTO.CartItemResponseDTO;
+import com.microserviceprojects.cart_service.DTO.UserDTO;
 import com.microserviceprojects.cart_service.Entity.CartItemEntity;
 import com.microserviceprojects.cart_service.Exception.ProductNotFoundException;
 import com.microserviceprojects.cart_service.Exception.UserNotFoundException;
+import com.microserviceprojects.cart_service.FeignClients.ProductFeignClient;
+import com.microserviceprojects.cart_service.FeignClients.UserFeignClient;
 import com.microserviceprojects.cart_service.Mapper.CartItemMapper;
 import com.microserviceprojects.cart_service.Repository.CartItemRepository;
 import jakarta.transaction.Transactional;
@@ -29,6 +32,12 @@ public class CartServiceImpl implements CartService{
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private ProductFeignClient productFeignClient;
+
+    @Autowired
+    private UserFeignClient userFeignClient;
+
     @Value("${product.service.url}")
     private String productServiceUrl;
 
@@ -40,8 +49,10 @@ public class CartServiceImpl implements CartService{
 
         // TODO : 1. product Id exists in DB or not
 
-        checkUserExists(request.getUserId());
-        checkProductExists(request.getProductId());
+        checkProductExistsUsingFeign(request.getProductId());
+        var userDTO = checkUserExistsUsingFeign(request.getUserId());
+//        checkUserExists(request.getUserId());
+//        checkProductExists(request.getProductId());
         CartItemEntity item;
         Optional<CartItemEntity> existingItem = cartItemRepository.findByUserIdAndProductId(request.getUserId(),request.getProductId());
 
@@ -55,7 +66,32 @@ public class CartServiceImpl implements CartService{
         }
 
         CartItemEntity saved = cartItemRepository.save(item);
-        return cartItemMapper.toDTO(saved);
+        var dto = cartItemMapper.toDTO(saved);
+        dto.setUserDTO(userDTO);
+        return dto;
+    }
+
+    private UserDTO checkUserExistsUsingFeign(Long userId) {
+
+        ResponseEntity<UserDTO> responseEntity = userFeignClient.findById(userId.intValue());
+
+        if(responseEntity.getStatusCode().is2xxSuccessful()) {
+            UserDTO result = responseEntity.getBody();
+            return result;
+        }
+        else
+        {
+          throw new UserNotFoundException("User Not Exists in DB: " + userId);
+        }
+    }
+
+    private void checkProductExistsUsingFeign(Long productId) {
+
+        boolean productExists = productFeignClient.isProductExists(productId);
+        if(!productExists) {
+            throw new ProductNotFoundException("Product Not Exists in DB: "+ productId);
+        }
+
     }
 
     public boolean checkUserExists(Long userId) {
