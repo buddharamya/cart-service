@@ -11,4 +11,5 @@ public class CartItemResponseDTO {
     private Long userId;
     private Long productId;
     private Integer quantity;
+    private UserDTO userDTO;
 }
