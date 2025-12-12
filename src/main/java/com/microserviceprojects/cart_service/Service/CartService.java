@@ -12,4 +12,7 @@ public interface CartService {
     void removeItem(Long userId,Long productId);
     List<CartItemResponseDTO> getUserCart(Long userId);
     void clearCart(Long userId);
+
+    boolean checkProductExists(Long productId);
+    boolean checkUserExists(Long userId);
 }

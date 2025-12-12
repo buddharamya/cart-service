@@ -1,6 +1,6 @@
 package com.microserviceprojects.cart_service.Controller;
 
-import com.microserviceprojects.cart_service.Client.ProductClient;
+//import com.microserviceprojects.cart_service.Client.ProductClient;
 import com.microserviceprojects.cart_service.DTO.CartItemRequestDTO;
 import com.microserviceprojects.cart_service.DTO.CartItemResponseDTO;
 import com.microserviceprojects.cart_service.Service.CartService;
@@ -20,8 +20,8 @@ public class CartItemController {
     @Autowired
     private CartService cartService;
 
-    @Autowired
-    private ProductClient productClient;
+//    @Autowired
+//    private ProductClient productClient;
 
     @PostMapping("/add")
     public ResponseEntity<CartItemResponseDTO> addItemToCart(@RequestBody CartItemRequestDTO request) {
@@ -62,6 +62,12 @@ public class CartItemController {
     @GetMapping("/check/{productId}")
     public boolean checkProductExists(@PathVariable Long productId) {
         log.info("CartItemController checkProductExists");
-        return productClient.checkProductExists(productId);
+        return cartService.checkProductExists(productId);
+    }
+
+    @GetMapping("/checkUser/{userId}")
+    public boolean checkUserExists(@PathVariable Long userId) {
+        log.info("CartItemController checkUserExists");
+        return cartService.checkUserExists(userId);
     }
 }
